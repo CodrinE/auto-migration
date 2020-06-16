@@ -1,0 +1,9 @@
+[
+  {
+    "Description": "Alpine Linux",
+    "Format": "qcow2",
+    "UserBucket": {
+        "S3Bucket": "proxmox-vms-mios",
+        "S3Key": "vm-104-disk-0.qcow2"
+    }
+}]
