@@ -25,7 +25,7 @@ echo "Please wait! Uploading file...."
 upload_file $CONVERTED_FILE $S3_BUCKET
 
 echo "Cleaning up..."
-#rm -r temp-parts
+rm -r temp-parts
 #check or create key pair
 echo "Checking for key pair"
 check_key_pair $KEY_PAIR
@@ -33,7 +33,7 @@ check_key_pair $KEY_PAIR
 #check or create security group + get groupId
 echo "Checking for security group"
 GROUP_ID=$(check_security_group $GROUP_NAME)
-
+#
 #add ingress and egress rules to group
 echo "Adding ingress rules for http, https and ssh"
 add_ingress_rules $GROUP_NAME
@@ -43,7 +43,7 @@ add_egress_rules $GROUP_ID
 #Create aws EC2 instance
 echo "Creating EC2 instance using imageId $IMAGE_ID"
 INSTANCE_ID=$(create_ec2_instance $IMAGE_ID $COUNT $INSTANCE_TYPE $KEY_PAIR $GROUP_ID $REGION)
-
+sleep 10
 #Check if instance is running
 while [ $(instance_check $INSTANCE_ID) != "running" ];do
     echo "Instance not running yet, waiting 30sec..."
@@ -57,9 +57,8 @@ echo "Public DNS is: $PUBLIC_DNS"
 chmod +x scripts/lib.sh
 chmod +x scripts/vm-scripts/vm-lib.sh
 chmod +x scripts/vm-scripts/build.sh
+sleep 150
 
- ssh -i "keys/awslinux.pem" ec2-user@$PUBLIC_DNS "sudo rm -r ~/scripts"
- scp -i "keys/awslinux.pem" -r scripts/  ec2-user@$PUBLIC_DNS:~/scripts
- ssh -i "keys/awslinux.pem" ec2-user@$PUBLIC_DNS \
-    "cd ~/scripts/vm-scripts && sudo bash ~/scripts/vm-scripts/build.sh \
-        $KEY_ID $SECRET_KEY $REGION $S3_BUCKET '${CONVERTED_FILE##*/}'"
+ scp -i "keys/$KEY_PAIR.pem" -r scripts/ ec2-user@$PUBLIC_DNS:~/scripts
+ ssh -i "keys/$KEY_PAIR.pem" ec2-user@$PUBLIC_DNS \
+    "cd ~/scripts/vm-scripts && sudo bash ~/scripts/vm-scripts/build.sh $KEY_ID $SECRET_KEY $REGION $S3_BUCKET '${CONVERTED_FILE##*/}'"

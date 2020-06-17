@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-
+set -x
 check_aws() {
  if aws --version 2>&1 | grep 'aws-cli'
  then
@@ -37,7 +37,8 @@ check_key_pair(){
     then
       echo "Creating key pair $1"
       mkdir -p keys
-      echo $(aws ec2 create-key-pair --key-name $1 | jq -r '.KeyMaterial') > keys/$1.pem
+#      echo $(aws ec2 create-key-pair --key-name $1 | jq '.KeyMaterial') > keys/$1.pem
+      echo $(aws ec2 create-key-pair --key-name $1 | jq '.KeyMaterial') | tail -c +2 | head -c -2 > keys/$1.pem
       chmod 400 keys/$1.pem
      else
         echo "Key Pair exists already."
@@ -79,7 +80,7 @@ create_ec2_instance() {
         --key-name $4 \
         --security-group-ids $5 \
         --associate-public-ip-address \
-        --region $6 | jq '.Reservations[] | .Instances[] | .InstanceId'
+        --region $6 | jq -r '.Instances[] | .InstanceId'
 }
 
 instance_check() { # check if instance is in running state
@@ -94,10 +95,10 @@ get_instance_public_dns() { #Query for public dns
     | jq -r '.Reservations[] | .Instances[] | .NetworkInterfaces[] | .PrivateIpAddresses[] | .Association.PublicDnsName')
 }
 
-upload_file() {     #Upload file to s3 bucket
+upload_file_parts() {     #Upload file to s3 bucket
 #    INPUT_FILE=$1    BUCKET=$2
     if [ -d "temp-parts" ]; then rm -Rf temp-parts; fi
-    chmod +x scripts/s3-multipart-upload.sh
+    chmod -x scripts/s3-multipart-upload.sh
     bash scripts/s3-multipart-upload.sh $1 $2
 }
 

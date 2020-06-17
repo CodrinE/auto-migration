@@ -1,5 +1,25 @@
 {
-  "AccessKey": "awsAccessKey",
-  "SecretAccessKey": "awsSecretKey",
-  "Region": "awsRegion"
+  "AwsSetup" : {
+    "AccessKey": "awsAccessKey",
+    "SecretAccessKey": "awsSecretKey",
+    "Region": "awsRegion",
+    "S3": {
+      "Bucket": "proxmox-vms-mios"
+    },
+    "KeyPairs": {
+      "KeyPairName": "v-test19"
+    },
+    "SecurityGroup": {
+      "GroupName": "g-test11"
+    }
+  },
+  "AwsInstanceSpecs": {
+    "ImageId": "ami-07dfba995513840b5",
+    "NumberOfInstances": "1",
+    "InstanceType": "t2.micro"
+  },
+  "ConvertDetails" : {
+    "InputFile": "/home/codec/Desktop/vmfiles/vm-104-disk-0.qcow2",
+    "OutputFormat": "vhdx"
+  }
 }
