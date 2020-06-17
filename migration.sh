@@ -1,10 +1,13 @@
 #!/bin/sh
-#set -x
+
 # Usage:
 # bash migration.sh
 
 . scripts/lib.sh
 . scripts/variables.sh
+
+echo "Checking for aws.."
+check_aws
 
 echo "Configuring aws...."
 init_aws $KEY_ID $SECRET_KEY $REGION
@@ -22,8 +25,7 @@ echo "Please wait! Uploading file...."
 upload_file $CONVERTED_FILE $S3_BUCKET
 
 echo "Cleaning up..."
-rm $CONVERTED_FILE
-rm -r temp-parts
+#rm -r temp-parts
 #check or create key pair
 echo "Checking for key pair"
 check_key_pair $KEY_PAIR
@@ -45,8 +47,19 @@ INSTANCE_ID=$(create_ec2_instance $IMAGE_ID $COUNT $INSTANCE_TYPE $KEY_PAIR $GRO
 #Check if instance is running
 while [ $(instance_check $INSTANCE_ID) != "running" ];do
     echo "Instance not running yet, waiting 30sec..."
-    sleep 30
+    sleep 10
 done
 
-echo "Public DNS is:"
-get_instance_public_dns $INSTANCE_ID
+
+PUBLIC_DNS=$(get_instance_public_dns $INSTANCE_ID)
+echo "Public DNS is: $PUBLIC_DNS"
+
+chmod +x scripts/lib.sh
+chmod +x scripts/vm-scripts/vm-lib.sh
+chmod +x scripts/vm-scripts/build.sh
+
+ ssh -i "keys/awslinux.pem" ec2-user@$PUBLIC_DNS "sudo rm -r ~/scripts"
+ scp -i "keys/awslinux.pem" -r scripts/  ec2-user@$PUBLIC_DNS:~/scripts
+ ssh -i "keys/awslinux.pem" ec2-user@$PUBLIC_DNS \
+    "cd ~/scripts/vm-scripts && sudo bash ~/scripts/vm-scripts/build.sh \
+        $KEY_ID $SECRET_KEY $REGION $S3_BUCKET '${CONVERTED_FILE##*/}'"

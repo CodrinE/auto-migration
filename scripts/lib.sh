@@ -1,5 +1,19 @@
 #!/usr/bin/env bash
 
+check_aws() {
+ if aws --version 2>&1 | grep 'aws-cli'
+ then
+     echo "aws already installed! proceeding..."
+ else
+     echo "aws not found..."
+     echo "Installing...."
+     curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+     unzip awscliv2.zip
+     sudo ./aws/install
+     rm awscliv2.zip
+  fi
+}
+
 init_aws()  { #Set initial aws account details
 # KEY_ID=$1    SECRET_KEY=$2   REGION=$3
     aws configure set aws_access_key_id $1
@@ -82,11 +96,13 @@ get_instance_public_dns() { #Query for public dns
 
 upload_file() {     #Upload file to s3 bucket
 #    INPUT_FILE=$1    BUCKET=$2
+    if [ -d "temp-parts" ]; then rm -Rf temp-parts; fi
+    chmod +x scripts/s3-multipart-upload.sh
     bash scripts/s3-multipart-upload.sh $1 $2
 }
 
 convert_vm() { #Convert vm image file to other format
-# INPUT_FILE=$1    OUTPUT_FORMAT=$2
+# $FILE_NAME=$1    OUTPUT_FORMAT=$2
     FILE_NAME="${1##*/}"  #Extract input_file
     FILE_EXTENSION=$(qemu-img info $1 | grep "file format")
     FILE_EXTENSION=$(echo "${FILE_EXTENSION##*:}" | xargs)  #Get current format
